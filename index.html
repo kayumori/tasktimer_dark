@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイマー</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+            background: #202020;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+            padding: 10px;
+        }
+        .timer-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 15px 30px;
+            border: 2px solid #ffffff;
+            border-radius: 12px;
+        }
+        .timer-display {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .time {
+            font-size: 36px;
+            font-variant-numeric: tabular-nums;
+        }
+        .label {
+            font-size: 24px;
+            opacity: 0.5;
+        }
+        @media (max-width: 768px) {
+            .timer-container {
+                padding: 12px 20px;
+            }
+            .time {
+                font-size: 28px;
+            }
+            .label {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-container">
+        <div class="timer-display">
+            <span class="time" id="hours">00</span>
+            <span class="label">:</span>
+            <span class="time" id="minutes">00</span>
+            <span class="label">:</span>
+            <span class="time" id="seconds">00</span>
+        </div>
+    </div>
+    <script>
+        let startTime = Date.now();
+        function updateTimer() {
+            const currentTime = Date.now();
+            const totalSeconds = Math.floor((currentTime - startTime) / 1000);
+            
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+            requestAnimationFrame(updateTimer);
+        }
+        updateTimer();
+    </script>
+</body>
+</html>
