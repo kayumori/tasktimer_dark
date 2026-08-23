@@ -4,35 +4,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>タイマー</title>
+    <script>
+    // テーマの決定順は 前回スイッチで選んだ設定 → ?theme= → ダーク。
+    // 描画前に確定させてチラつきを防ぐ
+    (function () {
+        var t;
+        try { t = localStorage.getItem('tasktimer-theme'); } catch (x) {}
+        if (t !== 'dark' && t !== 'light') {
+            try {
+                var p = new URLSearchParams(location.search).get('theme');
+                if (p === 'dark' || p === 'light') t = p;
+            } catch (x) {}
+        }
+        document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+    })();
+    </script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        /* ダーク（既定） */
+        :root {
+            --page:  #191919;   /* 枠外。Notionダークのページ背景と同じ色 */
+            --card:  #2a2a2a;   /* 縁を落としたときに中央が残るよう、少し明るめに置く */
+            --bd:    #ffffff;
+            --fg:    #ffffff;
+            --sw:    #7c7c7c;
+            --inset: inset 0 3px 13px rgba(0, 0, 0, 0.55),
+                     inset 0 -2px 9px rgba(0, 0, 0, 0.35);
+            --rim:
+                linear-gradient(180deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.15) 9%, rgba(0,0,0,0) 26%),
+                linear-gradient(0deg,   rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.09) 8%, rgba(0,0,0,0) 22%),
+                linear-gradient(90deg,  rgba(0,0,0,0.26) 0%, rgba(0,0,0,0) 5%),
+                linear-gradient(270deg, rgba(0,0,0,0.26) 0%, rgba(0,0,0,0) 5%);
+        }
+        /* ライト */
+        html[data-theme="light"] {
+            --page:  #ffffff;
+            --card:  #f6f6f6;
+            --bd:    #d5d5d5;
+            --fg:    #1a1a1a;
+            --sw:    #c0c0c0;
+            /* 明るい面は上から光が入る想定で、上辺の内壁がいちばん濃く落ちる */
+            --inset: inset 0 3px 12px rgba(0, 0, 0, 0.10),
+                     inset 0 -2px 8px rgba(0, 0, 0, 0.05);
+            --rim:
+                linear-gradient(180deg, rgba(0,0,0,0.13) 0%, rgba(0,0,0,0.04) 9%, rgba(0,0,0,0) 24%),
+                linear-gradient(0deg,   rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.02) 8%, rgba(0,0,0,0) 20%),
+                linear-gradient(90deg,  rgba(0,0,0,0.07) 0%, rgba(0,0,0,0) 5%),
+                linear-gradient(270deg, rgba(0,0,0,0.07) 0%, rgba(0,0,0,0) 5%);
+        }
+
+        /* iframeの地色は既定が白なので、必ず塗る */
+        html { background: var(--page); }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
-            background: #202020;
+            background: var(--page);
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 80px;
+            min-height: 100vh;
             padding: 10px;
         }
+
         .timer-container {
+            position: relative;
+            z-index: 0; /* 内壁を背景の上・中身の下に置くための重ね順の起点 */
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
             padding: 15px 30px;
-            border: 2px solid #ffffff;
+            background: var(--card);
+            border: 2px solid var(--bd);
             border-radius: 12px;
+            box-shadow: var(--inset);
         }
+
+        /* 内壁。枠の内側に落ちる陰影で、窪んだ盤面に見せる */
+        .timer-container::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            border-radius: inherit;
+            pointer-events: none;
+            background: var(--rim);
+        }
+
         .timer-display {
             display: flex;
             align-items: baseline;
             gap: 6px;
-            color: #ffffff;
+            color: var(--fg);
             font-weight: 600;
             letter-spacing: 0.5px;
         }
@@ -44,6 +112,39 @@
             font-size: 24px;
             opacity: 0.5;
         }
+
+        /* ライト・ダークの切り替えスイッチ */
+        .tg {
+            position: absolute;
+            right: 11px;
+            bottom: 9px;
+            z-index: 1;
+            width: 30px;
+            height: 17px;
+            padding: 0;
+            border: 1px solid var(--sw);
+            border-radius: 9px;
+            background: none;
+            cursor: pointer;
+            opacity: 0.45;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: opacity 0.18s;
+        }
+        .tg:hover, .tg:focus-visible { opacity: 1; }
+        .tg:focus-visible { outline: 2px solid var(--sw); outline-offset: 2px; }
+        .tg i {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--sw);
+            transition: transform 0.22s cubic-bezier(0.3, 0.9, 0.4, 1);
+        }
+        html:not([data-theme="light"]) .tg i { transform: translateX(13px); }
+
         @media (max-width: 768px) {
             .timer-container {
                 padding: 12px 20px;
@@ -54,6 +155,10 @@
             .label {
                 font-size: 20px;
             }
+            .tg { right: 8px; bottom: 7px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .tg i { transition: none; }
         }
     </style>
 </head>
@@ -66,13 +171,14 @@
             <span class="label">:</span>
             <span class="time" id="seconds">00</span>
         </div>
+        <button class="tg" id="tg" type="button" role="switch" aria-checked="true" aria-label="ライト・ダークの切り替え"><i></i></button>
     </div>
     <script>
         let startTime = Date.now();
         function updateTimer() {
             const currentTime = Date.now();
             const totalSeconds = Math.floor((currentTime - startTime) / 1000);
-            
+
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
@@ -82,6 +188,24 @@
             requestAnimationFrame(updateTimer);
         }
         updateTimer();
+
+        // テーマ切り替え。選んだ結果は次に開いたときも残す
+        const root = document.documentElement;
+        const tg = document.getElementById('tg');
+        const isDark = () => root.getAttribute('data-theme') !== 'light';
+
+        function markTheme() {
+            tg.setAttribute('aria-checked', isDark() ? 'true' : 'false');
+            tg.title = isDark() ? 'ライトモードにする' : 'ダークモードにする';
+        }
+
+        tg.addEventListener('click', () => {
+            root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+            markTheme();
+            try { localStorage.setItem('tasktimer-theme', isDark() ? 'dark' : 'light'); } catch (x) {}
+        });
+
+        markTheme();
     </script>
 </body>
 </html>
